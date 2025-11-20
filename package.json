@@ -1,0 +1,25 @@
+{
+  "name": "task-manager-fullstack",
+  "version": "1.0.0",
+  "description": "Modern full-stack task manager with React, TypeScript, Node.js, Express, and MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build"
+  },
+  "keywords": [
+    "react",
+    "typescript",
+    "nodejs",
+    "express",
+    "mongodb",
+    "fullstack",
+    "task-manager"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
