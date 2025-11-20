@@ -20,7 +20,14 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/taskma
 mongoose
   .connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
-  .catch((error) => console.error('❌ MongoDB connection error:', error));
+  .catch((error) => {
+    console.error('❌ MongoDB connection error:', error.message);
+    console.log('\n⚠️  MongoDB is not running!');
+    console.log('📝 To fix this, you have two options:');
+    console.log('   1. Install MongoDB locally: https://www.mongodb.com/try/download/community');
+    console.log('   2. Use MongoDB Atlas (free cloud): https://www.mongodb.com/atlas/database');
+    console.log('\n💡 The API server is running, but database operations will fail until MongoDB is connected.\n');
+  });
 
 // Routes
 app.get('/', (req: Request, res: Response) => {
