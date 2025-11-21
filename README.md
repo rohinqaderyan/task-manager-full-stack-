@@ -2,6 +2,10 @@
 
 A modern, full-stack task management application built with **React**, **TypeScript**, **Node.js**, **Express**, and **MongoDB**. This project demonstrates best practices in modern web development with a complete authentication system, RESTful API, and responsive UI.
 
+![GitHub](https://img.shields.io/github/license/rohinqaderyan/task-manager-full-stack-)
+![GitHub last commit](https://img.shields.io/github/last-commit/rohinqaderyan/task-manager-full-stack-)
+![GitHub repo size](https://img.shields.io/github/repo-size/rohinqaderyan/task-manager-full-stack-)
+
 ## 🚀 Features
 
 - ✅ **User Authentication** - Register and login with JWT tokens
