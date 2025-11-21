@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import taskRoutes from './routes/taskRoutes';
 import userRoutes from './routes/userRoutes';
+import { errorHandler, notFound } from './middleware/errorHandler';
+import { requestLogger } from './middleware/logger';
 
 dotenv.config();
 
@@ -13,6 +15,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
 // Database connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/taskmanager';
@@ -36,6 +39,10 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
+
+// Error handling middleware
+app.use(notFound);
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
