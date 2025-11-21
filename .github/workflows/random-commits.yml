@@ -6,7 +6,7 @@ on:
     - cron: '0 8 * * *'   # 8:00 AM UTC
     - cron: '0 14 * * *'  # 2:00 PM UTC
     - cron: '0 20 * * *'  # 8:00 PM UTC
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   random-commit:
