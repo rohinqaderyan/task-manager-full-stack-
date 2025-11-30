@@ -4,14 +4,23 @@ import api from '../api/axios';
 import { Task, CreateTaskInput } from '../types/task';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
+import TaskStats from '../components/TaskStats';
+import SearchBar from '../components/SearchBar';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorMessage from '../components/ErrorMessage';
+import { filterTasks, sortTasks } from '../utils/taskUtils';
 
 export default function Dashboard() {
   const { user, logout } = useAuthStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [filter, setFilter] = useState<'all' | 'todo' | 'in-progress' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'todo' | 'in-progress' | 'completed'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'priority' | 'status'>('date');
 
   useEffect(() => {
     fetchTasks();
@@ -19,10 +28,12 @@ export default function Dashboard() {
 
   const fetchTasks = async () => {
     try {
+      setError('');
       const response = await api.get(`/tasks?userId=${user?.id}`);
       setTasks(response.data);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to fetch tasks');
+      console.error('Error fetching tasks:', err);
     } finally {
       setLoading(false);
     }
@@ -30,11 +41,13 @@ export default function Dashboard() {
 
   const handleCreateTask = async (taskData: CreateTaskInput) => {
     try {
+      setError('');
       const response = await api.post('/tasks', { ...taskData, userId: user?.id });
       setTasks([response.data, ...tasks]);
       setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error creating task:', error);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create task');
+      console.error('Error creating task:', err);
     }
   };
 
@@ -72,14 +85,14 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
-  const filteredTasks = filter === 'all' 
-    ? tasks 
-    : tasks.filter(task => task.status === filter);
-
-  if (loading) {
-    return <div className="dashboard">Loading...</div>;
-  }
-
+  const filteredTasks = sortTasks(
+    filterTasks(tasks, {
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      priority: priorityFilter === 'all' ? undefined : priorityFilter,
+      search: searchQuery
+    }),
+    sortBy
+  );
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -90,10 +103,39 @@ export default function Dashboard() {
         <button onClick={logout}>Logout</button>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+      {error && <ErrorMessage message={error} onRetry={fetchTasks} />}
+
+      <TaskStats tasks={tasks} />
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button onClick={openCreateModal}>+ New Task</button>
-        <select value={filter} onChange={(e) => setFilter(e.target.value as any)}>
-          <option value="all">All Tasks</option>
+        
+        <SearchBar 
+          value={searchQuery} 
+          onChange={setSearchQuery}
+          placeholder="Search tasks..."
+        />
+        
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+          <option value="all">All Status</option>
+          <option value="todo">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+
+        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value as any)}>
+          <option value="all">All Priority</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+          <option value="date">Sort by Date</option>
+          <option value="priority">Sort by Priority</option>
+          <option value="status">Sort by Status</option>
+        </select>
+      </div>ption value="all">All Tasks</option>
           <option value="todo">To Do</option>
           <option value="in-progress">In Progress</option>
           <option value="completed">Completed</option>
