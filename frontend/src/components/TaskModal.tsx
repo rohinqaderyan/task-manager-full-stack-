@@ -13,6 +13,7 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   const [status, setStatus] = useState<'todo' | 'in-progress' | 'completed'>('todo');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [dueDate, setDueDate] = useState('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (task) {
@@ -24,8 +25,32 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
     }
   }, [task]);
 
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
+    } else if (title.length < 3) {
+      newErrors.title = 'Title must be at least 3 characters';
+    } else if (title.length > 100) {
+      newErrors.title = 'Title must not exceed 100 characters';
+    }
+
+    if (description.length > 500) {
+      newErrors.description = 'Description must not exceed 500 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     onSave({
       title,
       description,
@@ -37,23 +62,44 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>{task ? 'Edit Task' : 'Create New Task'}</h2>
-        
-        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Title *</label>
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors({ ...errors, title: '' });
+              }}
               required
+              style={errors.title ? { borderColor: '#ef4444' } : {}}
             />
+            {errors.title && (
+              <span style={{ color: '#ef4444', fontSize: '0.875rem' }}>
+                {errors.title}
+              </span>
+            )}
           </div>
 
           <div className="form-group">
             <label>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.description) setErrors({ ...errors, description: '' });
+              }}
+              style={errors.description ? { borderColor: '#ef4444' } : {}}
+            />
+            {errors.description && (
+              <span style={{ color: '#ef4444', fontSize: '0.875rem' }}>
+                {errors.description}
+              </span>
+            )}
+            <span style={{ fontSize: '0.875rem', color: '#999' }}>
+              {description.length}/500 characters
+            </span>
+          </div>el>Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
