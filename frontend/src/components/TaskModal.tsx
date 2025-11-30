@@ -62,6 +62,10 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
   };
 
   return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>{task ? 'Edit Task' : 'Create New Task'}</h2>
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Title *</label>
             <input
@@ -99,11 +103,6 @@ export default function TaskModal({ task, onSave, onClose }: TaskModalProps) {
             <span style={{ fontSize: '0.875rem', color: '#999' }}>
               {description.length}/500 characters
             </span>
-          </div>el>Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
           </div>
 
           <div className="form-group">

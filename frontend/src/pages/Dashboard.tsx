@@ -106,6 +106,11 @@ export default function Dashboard() {
     }),
     sortBy
   );
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -147,11 +152,6 @@ export default function Dashboard() {
           <option value="date">Sort by Date</option>
           <option value="priority">Sort by Priority</option>
           <option value="status">Sort by Status</option>
-        </select>
-      </div>ption value="all">All Tasks</option>
-          <option value="todo">To Do</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
         </select>
       </div>
 
