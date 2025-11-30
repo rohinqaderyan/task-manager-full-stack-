@@ -8,6 +8,8 @@ import TaskStats from '../components/TaskStats';
 import SearchBar from '../components/SearchBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import EmptyState from '../components/EmptyState';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
 
 export default function Dashboard() {
@@ -21,6 +23,10 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'status'>('date');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; taskId: string | null }>({
+    isOpen: false,
+    taskId: null
+  });
 
   useEffect(() => {
     fetchTasks();
@@ -64,14 +70,21 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+  const handleDeleteTask = (taskId: string) => {
+    setDeleteConfirm({ isOpen: true, taskId });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.taskId) return;
     
     try {
-      await api.delete(`/tasks/${taskId}`);
-      setTasks(tasks.filter(t => t._id !== taskId));
-    } catch (error) {
-      console.error('Error deleting task:', error);
+      setError('');
+      await api.delete(`/tasks/${deleteConfirm.taskId}`);
+      setTasks(tasks.filter(t => t._id !== deleteConfirm.taskId));
+      setDeleteConfirm({ isOpen: false, taskId: null });
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete task');
+      console.error('Error deleting task:', err);
     }
   };
 
@@ -143,7 +156,17 @@ export default function Dashboard() {
       </div>
 
       {filteredTasks.length === 0 ? (
-        <p>No tasks found. Create your first task!</p>
+        <EmptyState
+          icon={searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' ? '🔍' : '📋'}
+          title={searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' 
+            ? 'No tasks found' 
+            : 'No tasks yet'}
+          message={searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
+            ? 'Try adjusting your filters or search query'
+            : 'Create your first task to get started!'}
+          actionLabel={!searchQuery && statusFilter === 'all' && priorityFilter === 'all' ? 'Create Task' : undefined}
+          onAction={!searchQuery && statusFilter === 'all' && priorityFilter === 'all' ? openCreateModal : undefined}
+        />
       ) : (
         <div className="task-grid">
           {filteredTasks.map(task => (
@@ -167,6 +190,17 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ isOpen: false, taskId: null })}
+      />
     </div>
   );
 }
