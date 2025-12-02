@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useToast } from '../components/ToastContainer';
+import { useKeyboardShortcuts, KeyboardShortcutsHelp } from '../hooks/useKeyboardShortcuts';
 import api from '../api/axios';
 import { Task, CreateTaskInput } from '../types/task';
 import TaskCard from '../components/TaskCard';
@@ -36,6 +37,7 @@ export default function Dashboard() {
     isOpen: false,
     taskId: null
   });
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -145,6 +147,35 @@ export default function Dashboard() {
     sortBy
   );
 
+  // Keyboard shortcuts
+  const shortcuts = [
+    {
+      key: 'n',
+      ctrlKey: true,
+      action: openCreateModal,
+      description: 'Create new task',
+    },
+    {
+      key: 'e',
+      ctrlKey: true,
+      action: () => handleExport('json'),
+      description: 'Export tasks as JSON',
+    },
+    {
+      key: 'f',
+      ctrlKey: true,
+      action: () => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus(),
+      description: 'Focus search bar',
+    },
+    {
+      key: '/',
+      action: () => setShowShortcutsHelp(true),
+      description: 'Show keyboard shortcuts',
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -248,6 +279,12 @@ export default function Dashboard() {
         variant="danger"
         onConfirm={confirmDelete}
         onCancel={() => setDeleteConfirm({ isOpen: false, taskId: null })}
+      />
+
+      <KeyboardShortcutsHelp
+        shortcuts={shortcuts}
+        isOpen={showShortcutsHelp}
+        onClose={() => setShowShortcutsHelp(false)}
       />
     </div>
   );
