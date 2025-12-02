@@ -13,8 +13,10 @@ import EmptyState from '../components/EmptyState';
 import ConfirmDialog from '../components/ConfirmDialog';
 import TaskAnalytics from '../components/TaskAnalytics';
 import DateRangeFilter from '../components/DateRangeFilter';
+import ExportMenu from '../components/ExportMenu';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
 import { getDateRangeFilter } from '../utils/dateUtils';
+import { exportFilteredTasks, exportTaskReport } from '../utils/exportUtils';
 
 export default function Dashboard() {
   const { user, logout } = useAuthStore();
@@ -113,6 +115,23 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
+  const handleExport = (format: 'json' | 'csv' | 'report') => {
+    try {
+      const filterDesc = statusFilter !== 'all' || priorityFilter !== 'all' || searchQuery || dateRange !== 'all'
+        ? `filtered_${statusFilter}_${priorityFilter}_${dateRange}`
+        : 'all';
+
+      if (format === 'report') {
+        exportTaskReport(filteredTasks);
+      } else {
+        exportFilteredTasks(filteredTasks, format, filterDesc);
+      }
+      toast.success(`Tasks exported successfully as ${format.toUpperCase()}! 📥`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export tasks');
+    }
+  };
+
   const filteredTasks = sortTasks(
     getDateRangeFilter(
       dateRange,
@@ -151,6 +170,7 @@ export default function Dashboard() {
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button onClick={openCreateModal}>+ New Task</button>
+        <ExportMenu onExport={handleExport} disabled={tasks.length === 0} />
         
         <SearchBar 
           value={searchQuery} 
