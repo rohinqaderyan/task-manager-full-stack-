@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { useToast } from '../components/ToastContainer';
 import api from '../api/axios';
 import { Task, CreateTaskInput } from '../types/task';
 import TaskCard from '../components/TaskCard';
@@ -17,6 +18,7 @@ import { getDateRangeFilter } from '../utils/dateUtils';
 
 export default function Dashboard() {
   const { user, logout } = useAuthStore();
+  const toast = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,8 +57,11 @@ export default function Dashboard() {
       const response = await api.post('/tasks', { ...taskData, userId: user?.id });
       setTasks([response.data, ...tasks]);
       setIsModalOpen(false);
+      toast.success('Task created successfully! 🎉');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create task');
+      const errorMsg = err.response?.data?.message || 'Failed to create task';
+      setError(errorMsg);
+      toast.error(errorMsg);
       console.error('Error creating task:', err);
     }
   };
@@ -69,7 +74,10 @@ export default function Dashboard() {
       setTasks(tasks.map(t => t._id === editingTask._id ? response.data : t));
       setIsModalOpen(false);
       setEditingTask(null);
-    } catch (error) {
+      toast.success('Task updated successfully! ✨');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to update task';
+      toast.error(errorMsg);
       console.error('Error updating task:', error);
     }
   };
@@ -86,8 +94,11 @@ export default function Dashboard() {
       await api.delete(`/tasks/${deleteConfirm.taskId}`);
       setTasks(tasks.filter(t => t._id !== deleteConfirm.taskId));
       setDeleteConfirm({ isOpen: false, taskId: null });
+      toast.success('Task deleted successfully! 🗑️');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete task');
+      const errorMsg = err.response?.data?.message || 'Failed to delete task';
+      setError(errorMsg);
+      toast.error(errorMsg);
       console.error('Error deleting task:', err);
     }
   };
