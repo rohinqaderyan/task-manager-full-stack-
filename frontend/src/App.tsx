@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -7,6 +9,12 @@ import './App.css';
 
 function App() {
   const { user } = useAuthStore();
+  const { isDarkMode, setTheme } = useThemeStore();
+
+  // Initialize theme on app load
+  useEffect(() => {
+    setTheme(isDarkMode);
+  }, []);
 
   return (
     <Router>

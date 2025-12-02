@@ -14,6 +14,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import TaskAnalytics from '../components/TaskAnalytics';
 import DateRangeFilter from '../components/DateRangeFilter';
 import ExportMenu from '../components/ExportMenu';
+import ThemeToggle from '../components/ThemeToggle';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
 import { getDateRangeFilter } from '../utils/dateUtils';
 import { exportFilteredTasks, exportTaskReport } from '../utils/exportUtils';
@@ -155,7 +156,10 @@ export default function Dashboard() {
           <h1>Welcome, {user?.username}!</h1>
           <p>Manage your tasks efficiently</p>
         </div>
-        <button onClick={logout}>Logout</button>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <ThemeToggle />
+          <button onClick={logout}>Logout</button>
+        </div>
       </div>
 
       {error && <ErrorMessage message={error} onRetry={fetchTasks} />}
