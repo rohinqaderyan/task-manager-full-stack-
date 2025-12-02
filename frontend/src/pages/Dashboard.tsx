@@ -10,7 +10,10 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ConfirmDialog from '../components/ConfirmDialog';
+import TaskAnalytics from '../components/TaskAnalytics';
+import DateRangeFilter from '../components/DateRangeFilter';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
+import { getDateRangeFilter } from '../utils/dateUtils';
 
 export default function Dashboard() {
   const { user, logout } = useAuthStore();
@@ -23,6 +26,7 @@ export default function Dashboard() {
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'status'>('date');
+  const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; taskId: string | null }>({
     isOpen: false,
     taskId: null
@@ -99,11 +103,14 @@ export default function Dashboard() {
   };
 
   const filteredTasks = sortTasks(
-    filterTasks(tasks, {
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      priority: priorityFilter === 'all' ? undefined : priorityFilter,
-      search: searchQuery
-    }),
+    getDateRangeFilter(
+      dateRange,
+      filterTasks(tasks, {
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        priority: priorityFilter === 'all' ? undefined : priorityFilter,
+        search: searchQuery
+      })
+    ),
     sortBy
   );
 
@@ -123,7 +130,13 @@ export default function Dashboard() {
 
       {error && <ErrorMessage message={error} onRetry={fetchTasks} />}
 
+      <TaskAnalytics tasks={tasks} />
+
       <TaskStats tasks={tasks} />
+
+      <div style={{ marginBottom: '1rem' }}>
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+      </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <button onClick={openCreateModal}>+ New Task</button>
