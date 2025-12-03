@@ -13,6 +13,7 @@ import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
 import ConfirmDialog from '../components/ConfirmDialog';
 import TaskAnalytics from '../components/TaskAnalytics';
+import TaskCharts from '../components/TaskCharts';
 import DateRangeFilter from '../components/DateRangeFilter';
 import ExportMenu from '../components/ExportMenu';
 import ThemeToggle from '../components/ThemeToggle';
@@ -196,6 +197,8 @@ export default function Dashboard() {
       {error && <ErrorMessage message={error} onRetry={fetchTasks} />}
 
       <TaskAnalytics tasks={tasks} />
+
+      <TaskCharts tasks={tasks} />
 
       <TaskStats tasks={tasks} />
 
