@@ -18,6 +18,7 @@ import DateRangeFilter from '../components/DateRangeFilter';
 import ExportMenu from '../components/ExportMenu';
 import ThemeToggle from '../components/ThemeToggle';
 import BulkActions from '../components/BulkActions';
+import DragDropBoard from '../components/DragDropBoard';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
 import { getDateRangeFilter } from '../utils/dateUtils';
 import { exportFilteredTasks, exportTaskReport } from '../utils/exportUtils';
@@ -41,6 +42,7 @@ export default function Dashboard() {
   });
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'grid' | 'board'>('grid');
 
   useEffect(() => {
     fetchTasks();
@@ -276,8 +278,41 @@ export default function Dashboard() {
 
       <TaskStats tasks={tasks} />
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--card-bg)', padding: '0.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          <button
+            onClick={() => setViewMode('grid')}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: 'none',
+              background: viewMode === 'grid' ? 'var(--primary)' : 'transparent',
+              color: viewMode === 'grid' ? 'white' : 'var(--text-primary)',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '0.875rem',
+            }}
+          >
+            📊 Grid View
+          </button>
+          <button
+            onClick={() => setViewMode('board')}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: 'none',
+              background: viewMode === 'board' ? 'var(--primary)' : 'transparent',
+              color: viewMode === 'board' ? 'white' : 'var(--text-primary)',
+              cursor: 'pointer',
+              fontWeight: '500',
+              fontSize: '0.875rem',
+            }}
+          >
+            📋 Kanban Board
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -342,6 +377,13 @@ export default function Dashboard() {
             : 'Create your first task to get started!'}
           actionLabel={!searchQuery && statusFilter === 'all' && priorityFilter === 'all' ? 'Create Task' : undefined}
           onAction={!searchQuery && statusFilter === 'all' && priorityFilter === 'all' ? openCreateModal : undefined}
+        />
+      ) : viewMode === 'board' ? (
+        <DragDropBoard
+          tasks={filteredTasks}
+          onTaskMove={handleQuickStatusChange}
+          onEdit={openEditModal}
+          onDelete={handleDeleteTask}
         />
       ) : (
         <div className="task-grid">
