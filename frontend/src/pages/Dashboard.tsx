@@ -17,6 +17,7 @@ import TaskCharts from '../components/TaskCharts';
 import DateRangeFilter from '../components/DateRangeFilter';
 import ExportMenu from '../components/ExportMenu';
 import ThemeToggle from '../components/ThemeToggle';
+import BulkActions from '../components/BulkActions';
 import { filterTasks, sortTasks } from '../utils/taskUtils';
 import { getDateRangeFilter } from '../utils/dateUtils';
 import { exportFilteredTasks, exportTaskReport } from '../utils/exportUtils';
@@ -39,6 +40,7 @@ export default function Dashboard() {
     taskId: null
   });
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTasks();
@@ -136,6 +138,78 @@ export default function Dashboard() {
     }
   };
 
+  const handleTaskSelect = (taskId: string) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId);
+    } else {
+      newSelected.add(taskId);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const handleQuickStatusChange = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'completed') => {
+    try {
+      const response = await api.put(`/tasks/${taskId}`, { status: newStatus });
+      setTasks(tasks.map(t => t._id === taskId ? response.data : t));
+      toast.success('Task status updated! ✨');
+    } catch (error: any) {
+      toast.error('Failed to update task status');
+    }
+  };
+
+  const handleQuickPriorityChange = async (taskId: string, newPriority: 'low' | 'medium' | 'high') => {
+    try {
+      const response = await api.put(`/tasks/${taskId}`, { priority: newPriority });
+      setTasks(tasks.map(t => t._id === taskId ? response.data : t));
+      toast.success('Task priority updated! 🎯');
+    } catch (error: any) {
+      toast.error('Failed to update task priority');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTasks.size === 0) return;
+    try {
+      await Promise.all(Array.from(selectedTasks).map(id => api.delete(`/tasks/${id}`)));
+      setTasks(tasks.filter(t => !selectedTasks.has(t._id)));
+      setSelectedTasks(new Set());
+      toast.success(`${selectedTasks.size} task(s) deleted! 🗑️`);
+    } catch (error: any) {
+      toast.error('Failed to delete tasks');
+    }
+  };
+
+  const handleBulkStatusChange = async (newStatus: 'todo' | 'in-progress' | 'completed') => {
+    if (selectedTasks.size === 0) return;
+    try {
+      const updates = await Promise.all(
+        Array.from(selectedTasks).map(id => api.put(`/tasks/${id}`, { status: newStatus }))
+      );
+      const updatedTasksMap = new Map(updates.map(res => [res.data._id, res.data]));
+      setTasks(tasks.map(t => updatedTasksMap.get(t._id) || t));
+      setSelectedTasks(new Set());
+      toast.success(`${selectedTasks.size} task(s) status updated! ✨`);
+    } catch (error: any) {
+      toast.error('Failed to update tasks');
+    }
+  };
+
+  const handleBulkPriorityChange = async (newPriority: 'low' | 'medium' | 'high') => {
+    if (selectedTasks.size === 0) return;
+    try {
+      const updates = await Promise.all(
+        Array.from(selectedTasks).map(id => api.put(`/tasks/${id}`, { priority: newPriority }))
+      );
+      const updatedTasksMap = new Map(updates.map(res => [res.data._id, res.data]));
+      setTasks(tasks.map(t => updatedTasksMap.get(t._id) || t));
+      setSelectedTasks(new Set());
+      toast.success(`${selectedTasks.size} task(s) priority updated! 🎯`);
+    } catch (error: any) {
+      toast.error('Failed to update tasks');
+    }
+  };
+
   const filteredTasks = sortTasks(
     getDateRangeFilter(
       dateRange,
@@ -210,6 +284,26 @@ export default function Dashboard() {
         <button onClick={openCreateModal}>+ New Task</button>
         <ExportMenu onExport={handleExport} disabled={tasks.length === 0} />
         
+        {tasks.length > 0 && (
+          <button
+            onClick={() => {
+              if (selectedTasks.size === filteredTasks.length) {
+                setSelectedTasks(new Set());
+              } else {
+                setSelectedTasks(new Set(filteredTasks.map(t => t._id)));
+              }
+            }}
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color)',
+              background: 'var(--button-bg)',
+            }}
+          >
+            {selectedTasks.size === filteredTasks.length && filteredTasks.length > 0 ? '☑️ Deselect All' : '☐ Select All'}
+          </button>
+        )}
+        
         <SearchBar 
           value={searchQuery} 
           onChange={setSearchQuery}
@@ -257,6 +351,10 @@ export default function Dashboard() {
               task={task}
               onEdit={openEditModal}
               onDelete={handleDeleteTask}
+              onStatusChange={handleQuickStatusChange}
+              onPriorityChange={handleQuickPriorityChange}
+              isSelected={selectedTasks.has(task._id)}
+              onSelect={handleTaskSelect}
             />
           ))}
         </div>
@@ -272,6 +370,14 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      <BulkActions
+        selectedCount={selectedTasks.size}
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusChange={handleBulkStatusChange}
+        onBulkPriorityChange={handleBulkPriorityChange}
+        onClearSelection={() => setSelectedTasks(new Set())}
+      />
 
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}

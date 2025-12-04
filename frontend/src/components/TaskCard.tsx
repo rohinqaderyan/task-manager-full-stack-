@@ -1,13 +1,18 @@
 import { Task } from '../types/task';
 import { isOverdue, getDaysUntilDue } from '../utils/dateUtils';
+import TaskQuickActions from './TaskQuickActions';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onStatusChange?: (taskId: string, newStatus: 'todo' | 'in-progress' | 'completed') => void;
+  onPriorityChange?: (taskId: string, newPriority: 'low' | 'medium' | 'high') => void;
+  isSelected?: boolean;
+  onSelect?: (taskId: string) => void;
 }
 
-export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export default function TaskCard({ task, onEdit, onDelete, onStatusChange, onPriorityChange, isSelected, onSelect }: TaskCardProps) {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -45,8 +50,20 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
       style={{
         borderLeft: `4px solid ${priorityConfig.color}`,
         transition: 'all 0.3s ease',
+        background: isSelected ? 'var(--primary)' : 'var(--card-bg)',
+        opacity: isSelected ? 0.9 : 1,
       }}
     >
+      {onSelect && (
+        <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem' }}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(task._id)}
+            style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+          />
+        </div>
+      )}
       <div className="task-header">
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span>{statusConfig.icon}</span>
@@ -123,6 +140,14 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
         </div>
       )}
       
+      {onStatusChange && onPriorityChange && (
+        <TaskQuickActions
+          task={task}
+          onStatusChange={onStatusChange}
+          onPriorityChange={onPriorityChange}
+        />
+      )}
+
       <div className="task-actions">
         <button onClick={() => onEdit(task)}>Edit</button>
         <button onClick={() => onDelete(task._id)} style={{ backgroundColor: '#ef4444' }}>
