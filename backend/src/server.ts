@@ -39,6 +39,22 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Task Manager API is running!' });
 });
 
+// Health check endpoint for Kubernetes
+app.get('/health', (req: Request, res: Response) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  };
+  
+  if (mongoose.connection.readyState === 1) {
+    res.status(200).json(health);
+  } else {
+    res.status(503).json({ ...health, status: 'unhealthy' });
+  }
+});
+
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 
