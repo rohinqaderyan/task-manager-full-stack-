@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -16,10 +16,12 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:stable-alpine
+FROM nginx:1.25-bookworm
 
 # Add security updates
-RUN apk update && apk upgrade && apk add --no-cache curl
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Remove default nginx config
 RUN rm -rf /etc/nginx/conf.d/default.conf
@@ -30,17 +32,16 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create non-root user for nginx
-RUN adduser -D -u 1001 -g 'nginx' nginx \
-    && chown -R nginx:nginx /usr/share/nginx/html \
-    && chown -R nginx:nginx /var/cache/nginx \
-    && chown -R nginx:nginx /var/log/nginx \
-    && chown -R nginx:nginx /etc/nginx/conf.d \
-    && touch /var/run/nginx.pid \
-    && chown -R nginx:nginx /var/run/nginx.pid
+# Set proper permissions for nginx user (already exists in Debian nginx image)
+RUN chown -R www-data:www-data /usr/share/nginx/html && \
+    chown -R www-data:www-data /var/cache/nginx && \
+    chown -R www-data:www-data /var/log/nginx && \
+    chown -R www-data:www-data /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown -R www-data:www-data /var/run/nginx.pid
 
 # Switch to non-root user
-USER nginx
+USER www-data
 
 # Expose port
 EXPOSE 80

@@ -1,5 +1,5 @@
 # Use Node.js LTS as base image
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 
 # Set working directory
 WORKDIR /app
@@ -17,10 +17,12 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-bookworm-slim AS production
 
 # Add security updates
-RUN apk update && apk upgrade && apk add --no-cache dumb-init
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends dumb-init && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
