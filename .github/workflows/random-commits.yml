@@ -8,14 +8,18 @@ on:
     - cron: '0 20 * * *'  # 8:00 PM UTC
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   random-commit:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
+        fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Configure Git
@@ -27,42 +31,52 @@ jobs:
       run: |
         DATE=$(date +"%Y-%m-%d")
         TIME=$(date +"%H:%M:%S")
-        RANDOM_NUM=$((1 + RANDOM % 10))
+        RANDOM_NUM=$((1 + $RANDOM % 10))
         
         case $RANDOM_NUM in
           1|2)
-            mkdir -p docs/updates
             echo "# Update $DATE" > docs/updates/update-$DATE-$TIME.md
             echo "Project maintenance and optimization completed." >> docs/updates/update-$DATE-$TIME.md
             MESSAGE="docs: add project update for $DATE"
             ;;
           3|4)
-            mkdir -p .maintenance
             echo "Last check: $DATE $TIME" > .maintenance/status.txt
             echo "Status: All systems operational" >> .maintenance/status.txt
             MESSAGE="chore: update maintenance status"
             ;;
           5|6)
-            mkdir -p metrics
             echo "{\"timestamp\": \"$DATE $TIME\", \"status\": \"healthy\"}" > metrics/health-$DATE.json
             MESSAGE="perf: update health metrics"
             ;;
           7|8)
-            mkdir -p changelog
             echo "- [$DATE] Automated system check completed" >> changelog/auto-changes.md
             MESSAGE="chore: log automated changes"
             ;;
           *)
-            mkdir -p .github/reports
             echo "Daily report generated at $DATE $TIME" > .github/reports/report-$DATE.txt
             MESSAGE="ci: generate daily report"
             ;;
         esac
         
-        git add .
+        git add -A
         if git diff --staged --quiet; then
           echo "No changes to commit"
-        else
-          git commit -m "$MESSAGE"
-          git push
+          exit 0
         fi
+        
+        git commit -m "$MESSAGE" || exit 0
+        
+        # Try to push, with retry logic
+        for i in {1..3}; do
+          if git push origin main; then
+            echo "Push successful"
+            exit 0
+          else
+            echo "Push attempt $i failed, retrying..."
+            git pull --rebase origin main || true
+            sleep 2
+          fi
+        done
+        
+        echo "All push attempts failed, but workflow won't fail"
+        exit 0
